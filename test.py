@@ -14,6 +14,7 @@ parser.add_argument('--root', type=str, default='./data')
 parser.add_argument('--snapshot', type=str, default='1000000.pth')
 parser.add_argument('--image_size', type=int, default=256)
 parser.add_argument('--mask_root', type=str, default='./mask')
+parser.add_argument('--batch', type=int, default='1')
 
 args = parser.parse_args()
 
@@ -32,4 +33,4 @@ model = PConvUNet().to(device)
 load_ckpt(args.snapshot, [('model', model)])
 
 model.eval()
-evaluate(model, dataset_val, device, 'result.jpg')
+evaluate(model, dataset_val, device, 'result.jpg', batch)
