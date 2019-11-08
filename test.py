@@ -32,4 +32,4 @@ model = PConvUNet().to(device)
 load_ckpt(args.snapshot, [('model', model)])
 
 model.eval()
-evaluate(model, dataset_val, device, 'result.jpg')
+evaluate(model, dataset_val, device, '{:s}.png'.format(args.snapshot[:7]))
