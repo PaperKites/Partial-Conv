@@ -41,18 +41,18 @@ class InfiniteSampler(data.sampler.Sampler):
 
 parser = argparse.ArgumentParser()
 # training options
-parser.add_argument('--root', type=str, default='/srv/datasets/Places2')
-parser.add_argument('--mask_root', type=str, default='./masks')
-parser.add_argument('--save_dir', type=str, default='./snapshots/default')
-parser.add_argument('--log_dir', type=str, default='./logs/default')
+parser.add_argument('--root', type=str, default='./data')
+parser.add_argument('--mask_root', type=str, default='./data/mask')
+parser.add_argument('--save_dir', type=str, default='./snapshots')
+parser.add_argument('--log_dir', type=str, default='./logs')
 parser.add_argument('--lr', type=float, default=2e-4)
 parser.add_argument('--lr_finetune', type=float, default=5e-5)
-parser.add_argument('--max_iter', type=int, default=1000000)
+parser.add_argument('--max_iter', type=int, default=1150000)
 parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--n_threads', type=int, default=16)
-parser.add_argument('--save_model_interval', type=int, default=50000)
-parser.add_argument('--vis_interval', type=int, default=5000)
-parser.add_argument('--log_interval', type=int, default=10)
+parser.add_argument('--save_model_interval', type=int, default=100)
+parser.add_argument('--vis_interval', type=int, default=100)
+parser.add_argument('--log_interval', type=int, default=100)
 parser.add_argument('--image_size', type=int, default=256)
 parser.add_argument('--resume', type=str)
 parser.add_argument('--finetune', action='store_true')
@@ -71,10 +71,15 @@ writer = SummaryWriter(log_dir=args.log_dir)
 
 size = (args.image_size, args.image_size)
 img_tf = transforms.Compose(
-    [transforms.Resize(size=size), transforms.ToTensor(),
+    [transforms.RandomCrop(256),
+     transforms.RandomHorizontalFlip(),
+     transforms.RandomVerticalFlip(),
+     transforms.ToTensor(),
      transforms.Normalize(mean=opt.MEAN, std=opt.STD)])
 mask_tf = transforms.Compose(
-    [transforms.Resize(size=size), transforms.ToTensor()])
+    [transforms.RandomHorizontalFlip(),
+     transforms.RandomVerticalFlip(),
+     transforms.ToTensor()])
 
 dataset_train = Places2(args.root, args.mask_root, img_tf, mask_tf, 'train')
 dataset_val = Places2(args.root, args.mask_root, img_tf, mask_tf, 'val')
@@ -83,7 +88,7 @@ iterator_train = iter(data.DataLoader(
     dataset_train, batch_size=args.batch_size,
     sampler=InfiniteSampler(len(dataset_train)),
     num_workers=args.n_threads))
-print(len(dataset_train))
+print('Dataset size= '+str(len(dataset_train)))
 model = PConvUNet().to(device)
 
 if args.finetune:
