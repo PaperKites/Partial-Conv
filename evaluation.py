@@ -55,11 +55,3 @@ def evaluate(model, dataset, device, filename):
     grid = make_grid(torch.cat((unnormalize(image), mask, unnormalize(output), unnormalize(gt)), dim=0),Iteration)
 
     save_image(grid, filename)
-    save_image(unnormalize(output), 'res.jpg')
-    save_image(unnormalize(gt), 'res(gt).jpg')
-
-        # data=unnormalize(output).numpy()
-        # for j in range(0,len(data)):
-        #     x=data[j,:,:,:]
-        #     print(np.swapaxes(x, 0, -1).shape)
-        #     cv2.imwrite(str(j)+'mask.png', cv2.cvtColor(np.swapaxes(x, 0, -1), cv2.COLOR_RGB2GRAY))
