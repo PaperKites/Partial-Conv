@@ -32,7 +32,7 @@ def weights_init(init_type='gaussian'):
 class VGG16FeatureExtractor(nn.Module):
     def __init__(self):
         super().__init__()
-        vgg16 = models.vgg16(pretrained=True)
+        vgg16 = models.vgg16(pretrained=True)       # might delete this line
         self.enc_1 = nn.Sequential(*vgg16.features[:5])
         self.enc_2 = nn.Sequential(*vgg16.features[5:10])
         self.enc_3 = nn.Sequential(*vgg16.features[10:17])
@@ -54,13 +54,13 @@ class PartialConv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
                  padding=0, dilation=1, groups=1, bias=True):
         super().__init__()
-        self.input_conv = nn.Conv2d(in_channels, out_channels, kernel_size,
+        self.input_conv = nn.Conv3d(in_channels, out_channels, kernel_size,
                                     stride, padding, dilation, groups, bias)
-        self.mask_conv = nn.Conv2d(in_channels, out_channels, kernel_size,
+        self.mask_conv = nn.Conv3d(in_channels, out_channels, kernel_size,
                                    stride, padding, dilation, groups, False)
         self.input_conv.apply(weights_init('kaiming'))
 
-        torch.nn.init.constant_(self.mask_conv.weight, 1.0)
+        torch.nn.init.constant_(self.mask_conv.weight, 1.0) #Fills the input Tensor with the value
 
         # mask is not updated
         for param in self.mask_conv.parameters():
@@ -73,8 +73,7 @@ class PartialConv(nn.Module):
 
         output = self.input_conv(input * mask)
         if self.input_conv.bias is not None:
-            output_bias = self.input_conv.bias.view(1, -1, 1, 1).expand_as(
-                output)
+            output_bias = self.input_conv.bias.view(1, -1, 1, 1).expand_as(output)     # view=reshape - expand_as = reshape then expand with the same values
         else:
             output_bias = torch.zeros_like(output)
 
@@ -107,7 +106,7 @@ class PCBActiv(nn.Module):
             self.conv = PartialConv(in_ch, out_ch, 3, 1, 1, bias=conv_bias)
 
         if bn:
-            self.bn = nn.BatchNorm2d(out_ch)
+            self.bn = nn.BatchNorm3d(out_ch)
         if activ == 'relu':
             self.activation = nn.ReLU()
         elif activ == 'leaky':
@@ -146,8 +145,8 @@ class PConvUNet(nn.Module):
                               bn=False, activ=None, conv_bias=True)
 
     def forward(self, input, input_mask):
-        h_dict = {}  # for the output of enc_N
-        h_mask_dict = {}  # for the output of enc_N
+        h_dict = {}  # for the output of enc_N (empty dictionary)
+        h_mask_dict = {}  # for the output of enc_N (empty dictionary)
 
         h_dict['h_0'], h_mask_dict['h_0'] = input, input_mask
 
@@ -188,7 +187,7 @@ class PConvUNet(nn.Module):
         super().train(mode)
         if self.freeze_enc_bn:
             for name, module in self.named_modules():
-                if isinstance(module, nn.BatchNorm2d) and 'enc' in name:
+                if isinstance(module, nn.BatchNorm3d) and 'enc' in name:
                     module.eval()
 
 
