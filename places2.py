@@ -22,10 +22,15 @@ class Places2(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         gt_img = Image.open(self.paths[index])
+
+        if gt_img.size[1] != 256 || gt_img.size[0] != 256:
+            print('Changing '+self.paths[index]' size')
+            gt_img=gt_img.resize(256,256)
+            
         try:
           gt_img = self.img_transform(gt_img.convert('RGB'))
         except:
-          print(self.paths[index])
+          print('error: ' + self.paths[index])
 
         mask = Image.open(self.mask_paths[random.randint(0, self.N_mask - 1)])
         mask =  PIL.ImageOps.invert(mask.convert('RGB'))
