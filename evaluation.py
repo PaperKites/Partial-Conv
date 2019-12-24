@@ -52,6 +52,7 @@ def evaluate(model, dataset, device, filename):
         output, _ = model(image.to(device), mask.to(device))
     output = output.to(torch.device('cpu'))
 
-    grid = make_grid(torch.cat((unnormalize(image), mask, unnormalize(output), unnormalize(gt)), dim=0),Iteration)
-
+    # grid = make_grid(torch.cat((unnormalize(image), mask, unnormalize(output), unnormalize(gt)), dim=0),Iteration)
+    
+    grid = make_grid(torch.cat((unnormalize(output)[0:1] ,unnormalize(gt)[0:1] ), dim=0),1)
     save_image(grid, filename)
