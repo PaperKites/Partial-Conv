@@ -1,104 +1,56 @@
 import torch
 from torchvision.utils import make_grid, save_image
-from util.image import unnormalize
-from torchvision import transforms
-import torch.nn.functional as F
+from tensorboardX import SummaryWriter
+import os
+
+from util.ssim import SSIM
+from loss import InpaintingLoss
+from net import VGG16FeatureExtractor
 import opt
-from PIL import Image, ImageOps
-import numpy as np
-import cv2
-import scipy.io
-import math
+from util.image import unnormalize
 
-Holes = scipy.io.loadmat('data.mat')['Holes_Vol']
-Volume = scipy.io.loadmat('data.mat')['Trimmed_Vol']
+def evaluate(model, dataset, device, filename, epoch ,log_dir):
 
-size = (256, 256) # The model is trained on 256x256 images (Places2 Dataset)
-img_transform = transforms.Compose(
-    [transforms.Resize(size=size), transforms.ToTensor(),
-     transforms.Normalize(mean=opt.MEAN, std=opt.STD)])
-mask_transform = transforms.Compose(
-    [transforms.Resize(size=size), transforms.ToTensor()])   #transforms.ToTensor() convert 0-255 to 0-1 implicitly
 
-# convert numpy array to image
-def nump2img(nump):
-    nump= Image.fromarray(nump)
-    return nump.convert('RGB')
+    criterion = InpaintingLoss(VGG16FeatureExtractor()).to(device)
+    SSIM_Accuracy = SSIM()
+    ssim=0
 
-# convert numpy array to image, but for masks
-def nump2mask(nump):
-    nump=1-nump #Invert binary array
-    nump = Image.fromarray(nump*255)
-    return nump.convert('RGB')
+    image, mask, gt = zip(*[dataset[i] for i in range(8)])
+    image = torch.stack(image)
+    mask = torch.stack(mask)
+    gt = torch.stack(gt)
+    with torch.no_grad():
+        output, _ = model(image.to(device), mask.to(device))
 
-def evaluate(model, dataset, device, filename):
+    loss_dict = criterion(image.to(device), mask.to(device), output, gt.to(device))
+    loss = 0.0
+    for key, coef in opt.LAMBDA_DICT.items():
+        value = coef * loss_dict[key]
+        loss += value
 
-    ThreeVolumes = []
-    X,Y,Z =Volume.shape
+    ssim += SSIM_Accuracy(gt.to(device), output)
 
-    #highest dimension
-    max=Volume.shape[0]
-    for  Dim in range(3):
-        if Volume.shape[Dim]>max:
-            max=Volume.shape[Dim]
+    output = output.to(torch.device('cpu'))
 
-    # Iterate over the 3 axis
-    for Dim in range(3):
-        Result=torch.zeros((0,3,)+size)
-        Iteration=Volume.shape[Dim]
+    grid = make_grid(
+        torch.cat((unnormalize(image), mask, unnormalize(output),
+                    unnormalize(gt)), dim=0))
+    save_image(grid, filename)
 
-        for BatchNumber in range(math.ceil(Iteration/16)):  # Batch=16, so iterate NumberOfSlides/16 times
-            mask,image,gt = ([] for _ in range(3))
 
-            for temp in range(16):
-                index=(BatchNumber*16)+temp
-                if index < Iteration :
-                    if Dim==0:
-                        gt = (*gt,img_transform(nump2img(Volume[index,:,:])))
-                        mask = (*mask,mask_transform(nump2mask(Holes[index,:,:])))
-                        image= (*image,mask[temp]*gt[temp])
-                    elif Dim==1:
-                        gt = (*gt,img_transform(nump2img(Volume[:,index,:])))
-                        mask = (*mask,mask_transform(nump2mask(Holes[:,index,:])))
-                        image= (*image,mask[temp]*gt[temp])
-                    elif Dim==2:
-                        gt = (*gt,img_transform(nump2img(Volume[:,:,index])))
-                        mask = (*mask,mask_transform(nump2mask(Holes[:,:,index])))
-                        image= (*image,mask[temp]*gt[temp])
+    log_dir = log_dir + '/eval_logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
 
-            image = torch.stack(image)
-            mask = torch.stack(mask)
-            gt = torch.stack(gt)
-            with torch.no_grad():
-                output, _ = model(image.to(device), mask.to(device))
-            output = output.to(torch.device('cpu')) #torch.Size([16, 3, 256, 256]) [B,C,W,H]
-            Result = torch.cat((Result,output), 0)  # initially i=0; torch.Size([i+=16, 3, 256, 256]) [NumOfBatches,C,W,H]
+    log = os.path.join(log_dir, 'eval_log.txt')
+    with open(log, "a") as log_file:
+        log_file.write('Epoch: [{0}]\t'
+        'Accuracy: {1:.4f}\t'
+        'Loss {2:.4f}\n'.format(
+        epoch, ssim, loss))
 
-        if Dim==0:
-            Result = unnormalize(Result)
-            out0 = F.interpolate(Result, size=(Y,Z))  #The resize operation on tensor.
-            ThreeVolumes.append(out0)
-        elif Dim==1:
-            Result = unnormalize(Result)
-            out1 = F.interpolate(Result, size=(X,Z))  #The resize operation on tensor.
-            ThreeVolumes.append(out1)
-        elif Dim==2:
-            Result = unnormalize(Result)
-            out2 = F.interpolate(Result, size=(X,Y))  #The resize operation on tensor.
-            ThreeVolumes.append(out2)
-
-    out0 = out0.permute(0,2,3,1)    #(B x W x H x C)
-    out1 = out1.permute(2,0,3,1)
-    out2 = out2.permute(2,3,0,1)
-
-    Sum=torch.add(out0,torch.add(out1 ,out2))  #torch.Size([626, 256, 256, 3])
-    Avg=torch.div(Sum,3)
-
-    for i in range(0,10,2):
-        Temp=Avg.mul(255).clamp_(0, 255).numpy()
-        img = Image.fromarray((Temp[:,i,:,:]).astype(np.uint8)).convert('L')
-        img.save('{:d}Avg.jpg'.format(i + 1))
-
-        # Temp1=out1.mul(255).clamp_(0, 255).numpy()
-        # img1 = Image.fromarray((Temp1[:,i,:,:]).astype(np.uint8)).convert('L')
-        # img1.save('{:d}.jpg'.format(i + 1))
+    writer = SummaryWriter(log_dir = log_dir)
+    writer.add_scalar('Loss/Loss', loss, (epoch+1))
+    writer.add_scalar('Accuracy/SSIM accuracy', ssim.item(), (epoch+1))
+    writer.close()
