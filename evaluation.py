@@ -14,7 +14,7 @@ def evaluate(model, dataset, device, filename, epoch ,log_dir):
 
     criterion = InpaintingLoss(VGG16FeatureExtractor()).to(device)
     SSIM_Accuracy = SSIM()
-    ssim=0
+    ssim = 0
 
     image, mask, gt = zip(*[dataset[i] for i in range(8)])
     image = torch.stack(image)

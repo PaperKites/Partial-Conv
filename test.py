@@ -14,7 +14,7 @@ from util.io import load_ckpt
 import opt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--snapshot', type = str, default = None, help='Pre-trained model filename')
+parser.add_argument('--snapshot', type = str, default = None, help = 'Pre-trained model filename')
 parser.add_argument('--image_size', type = int, default = 256, help = 'Image dimensions')
 parser.add_argument('--volume_name', type = str, default = None, help = 'Volume filename')
 parser.add_argument('--batch_size', type = int, default = 16, help = 'Mini-batch size')
@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 # Use GPU if available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print('Using device:', device)
+print('Used device:', device)
 
 # Change it as needed (filename)[Variable_Name]
 Holes = scipy.io.loadmat(args.volume_name)['Holes_Vol']
@@ -54,7 +54,7 @@ img_transform = transforms.Compose(
 mask_transform = transforms.Compose(
     [transforms.Resize(size=size,interpolation=Image.NEAREST), transforms.ToTensor()])
 
-X,Y,Z =Volume.shape
+X,Y,Z = Volume.shape
 
 # Iterate over the 3 axis
 for Dim in range(3):
