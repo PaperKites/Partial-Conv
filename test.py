@@ -16,7 +16,7 @@ import opt
 parser = argparse.ArgumentParser()
 parser.add_argument('--snapshot', type = str, default = None, help = 'Pre-trained model filename')
 parser.add_argument('--image_size', type = int, default = 256, help = 'Image dimensions')
-parser.add_argument('--volume_name', type = str, default = None, help = 'Volume filename')
+parser.add_argument('--volume_name', type = str, default = 'data.mat', help = 'Volume filename')
 parser.add_argument('--batch_size', type = int, default = 16, help = 'Mini-batch size')
 
 args = parser.parse_args()
@@ -90,17 +90,17 @@ for Dim in range(3):
 
     if Dim == 0:
         Result = unnormalize(Result)
-        First_Dim = F.interpolate(Result, size=(Y,Z),mode='bicubic')  #The resize operation on tensor.
+        First_Dim = F.interpolate(Result, size=(Y,Z), mode='bicubic')  #The resize operation on tensor.
     elif Dim == 1:
         Result = unnormalize(Result)
-        Sec_Dim = F.interpolate(Result, size=(X,Z),mode='bicubic')  #The resize operation on tensor.
+        Sec_Dim = F.interpolate(Result, size=(X,Z), mode='bicubic')  #The resize operation on tensor.
     elif Dim == 2:
         Result = unnormalize(Result)
-        Third_Dim = F.interpolate(Result, size=(X,Y),mode='bicubic')  #The resize operation on tensor.
+        Third_Dim = F.interpolate(Result, size=(X,Y), mode='bicubic')  #The resize operation on tensor.
 
-First_Dim = First_Dim.permute(0,2,3,1)    #(B x W x H x C)
-Sec_Dim = Sec_Dim.permute(2,0,3,1)
-Third_Dim = Third_Dim.permute(2,3,0,1)
+First_Dim = First_Dim.mul(255).clamp_(0, 255).permute(0,2,3,1)    #(B x W x H x C)
+Sec_Dim = Sec_Dim.mul(255).clamp_(0, 255).permute(2,0,3,1)
+Third_Dim = Third_Dim.mul(255).clamp_(0, 255).permute(2,3,0,1)
 
 Sum = torch.add(First_Dim,torch.add(Sec_Dim ,Third_Dim))
 Avg = torch.div(Sum,3)

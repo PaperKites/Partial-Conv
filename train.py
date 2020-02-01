@@ -26,7 +26,7 @@ from util.ssim import SSIM
 # training options
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', type = str, default = './data', help = 'Dataset directory')
-parser.add_argument('--save_dir', type = str, default='./snapshots', help = 'Model save directory')
+parser.add_argument('--save_dir', type = str, default = './snapshots', help = 'Model save directory')
 parser.add_argument('--log_dir', type = str, default = '/logs', help = 'logging directory')
 parser.add_argument('--lr', type = float, default = 2e-4, help = 'Training learning rate')
 parser.add_argument('--lr_finetune', type = float, default = 5e-5, help = 'Fine-tuning learning rate')
