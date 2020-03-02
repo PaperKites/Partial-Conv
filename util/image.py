@@ -1,5 +1,5 @@
 import torch
-import model.opt
+from model import opt
 
 def unnormalize(x):
     x = x.transpose(1, 3)

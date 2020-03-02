@@ -11,7 +11,7 @@ import argparse
 
 from model.net import PConvUNet
 from util.io import load_ckpt
-import model.opt
+from model import opt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--snapshot', type = str, default = None, help = 'Pre-trained model filename')

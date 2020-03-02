@@ -6,7 +6,7 @@ import os
 from util.ssim import SSIM
 from model.loss import InpaintingLoss
 from model.net import VGG16FeatureExtractor
-import model.opt
+from model import opt
 from util.image import unnormalize
 
 def evaluate(model, dataset, device, filename, epoch ,log_dir):

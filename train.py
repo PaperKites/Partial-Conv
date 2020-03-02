@@ -14,7 +14,7 @@ import time
 from datetime import datetime
 import sys
 
-import model.opt
+from model import opt
 from evaluation import evaluate
 from model.loss import InpaintingLoss
 from model.net import PConvUNet, VGG16FeatureExtractor
