@@ -9,9 +9,9 @@ import scipy.io
 import math
 import argparse
 
-from net import PConvUNet
+from model.net import PConvUNet
 from util.io import load_ckpt
-import opt
+import model.opt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--snapshot', type = str, default = None, help = 'Pre-trained model filename')

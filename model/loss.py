@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 
 
+"""Refer to the paper(arXiv:1804.07723 - pp. 6) for more information about the loss functions"""
+
 def gram_matrix(feat):
     # https://github.com/pytorch/examples/blob/master/fast_neural_style/neural_style/utils.py
     (b, ch, h, w) = feat.size()

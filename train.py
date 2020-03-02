@@ -14,11 +14,11 @@ import time
 from datetime import datetime
 import sys
 
-import opt
+import model.opt
 from evaluation import evaluate
-from loss import InpaintingLoss
-from net import PConvUNet, VGG16FeatureExtractor
-from Dataset import Dataset
+from model.loss import InpaintingLoss
+from model.net import PConvUNet, VGG16FeatureExtractor
+from util.Dataset import Dataset
 from util.io import load_ckpt, save_ckpt
 from util.ssim import SSIM
 

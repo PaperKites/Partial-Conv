@@ -4,9 +4,9 @@ from tensorboardX import SummaryWriter
 import os
 
 from util.ssim import SSIM
-from loss import InpaintingLoss
-from net import VGG16FeatureExtractor
-import opt
+from model.loss import InpaintingLoss
+from model.net import VGG16FeatureExtractor
+import model.opt
 from util.image import unnormalize
 
 def evaluate(model, dataset, device, filename, epoch ,log_dir):
