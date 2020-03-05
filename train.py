@@ -10,8 +10,6 @@ from torch.optim.lr_scheduler import StepLR
 from PIL import Image
 import time
 from datetime import datetime
-import time
-from datetime import datetime
 import sys
 
 from model import opt

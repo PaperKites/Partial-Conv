@@ -37,22 +37,24 @@ model.eval()
 # convert numpy array to image
 def nump2img(nump):
     nump = Image.fromarray(nump)
-    return nump.convert('RGB')
+    return nump
 
 # convert numpy array to mask
 def nump2mask(nump):
     nump = 1 - nump #Invert binary array
     nump = Image.fromarray(nump * 255)
-    return nump.convert('RGB')
+    return nump
 
 
 
 size = (args.image_size, args.image_size) # The model is trained on 256x256 images (Places2 Dataset)
 img_transform = transforms.Compose(
-    [transforms.Resize(size=size,interpolation=Image.NEAREST), transforms.ToTensor(),   #transforms.ToTensor() convert 0-255 to 0-1 implicitly
-     transforms.Normalize(mean=opt.MEAN, std=opt.STD)])
+    [transforms.Resize(size=size,interpolation=Image.NEAREST), transforms.Grayscale(3),
+    transforms.ToTensor(),   #transforms.ToTensor() convert 0-255 to 0-1 implicitly
+    transforms.Normalize(mean=opt.MEAN, std=opt.STD)])
 mask_transform = transforms.Compose(
-    [transforms.Resize(size=size,interpolation=Image.NEAREST), transforms.ToTensor()])
+    [transforms.Resize(size=size,interpolation=Image.NEAREST), transforms.Grayscale(3),
+    transforms.ToTensor()])
 
 X,Y,Z = Volume.shape
 
